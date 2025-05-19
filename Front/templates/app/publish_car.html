@@ -1,0 +1,276 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Publicar Nuevo Coche - TFG2{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Estilos del formulario (puedes moverlos a tu style.css global si prefieres) */
+    .form-container div {
+        margin-bottom: 15px;
+    }
+
+    .form-container label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-container input[type="text"],
+    .form-container input[type="number"],
+    .form-container select,
+    .form-container textarea {
+        width: calc(100% - 22px);
+        /* Para acomodar padding y border */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .form-container input[type="file"] {
+        padding: 5px;
+    }
+
+    .form-container button[type="submit"] {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1em;
+        background-color: #007bff;
+        color: white;
+    }
+
+    .form-container button[type="submit"]:hover {
+        background-color: #0056b3;
+    }
+
+    .error-message {
+        /* Para el div general-error si lo usas con JS */
+        color: #dc3545;
+        /* Rojo */
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+    }
+
+    #image-preview-container img {
+        /* Estilo para las previsualizaciones de JS */
+        border: 1px solid #ddd;
+        padding: 3px;
+        max-width: 100px;
+        /* Ajusta según necesidad */
+        max-height: 100px;
+        object-fit: cover;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Publicar Nuevo Coche</h2>
+    <p>Completa los detalles de tu coche y sube algunas imágenes.</p>
+
+    <div id="general-error" class="error-message" style="display: none;"></div>
+
+    {# Si vas a usar el envío tradicional con Flask (como en la última versión de app.py que te di), #}
+    {# el ID del form y el script de JS son menos relevantes aquí, a menos que los adaptes. #}
+    {# Para un envío 100% Flask, el action sería {{ url_for('publish_car_page') }} y enctype="multipart/form-data" #}
+    <form id="publish-car-form" method="POST" action="{{ url_for('publish_car_page') }}" enctype="multipart/form-data">
+
+        {# --- Campos existentes --- #}
+        <div>
+            <label for="marca">Marca:</label>
+            <input type="text" id="marca" name="marca" value="{{ form_data.marca if form_data else '' }}" required>
+        </div>
+        <div>
+            <label for="modelo">Modelo:</label>
+            <input type="text" id="modelo" name="modelo" value="{{ form_data.modelo if form_data else '' }}" required>
+        </div>
+        <div>
+            <label for="ano">Año de Fabricación:</label>
+            <input type="number" id="ano" name="ano" min="1900" max="{{ now.year if now else '2024' }}"
+                value="{{ form_data.ano if form_data else '' }}" required placeholder="Ej: 2020">
+        </div>
+        <div>
+            <label for="cv">CV (Caballos de Vapor):</label>
+            <input type="number" id="cv" name="cv" min="1" value="{{ form_data.cv if form_data else '' }}" required
+                placeholder="Ej: 150">
+        </div>
+        <div>
+            <label for="color">Color:</label>
+            <input type="text" id="color" name="color" value="{{ form_data.color if form_data else '' }}" required
+                placeholder="Ej: Rojo">
+        </div>
+        <div>
+            <label for="combustible">Tipo de Combustible:</label>
+            <select id="combustible" name="combustible" required>
+                <option value="" disabled {% if not form_data or not form_data.combustible %}selected{% endif %}>
+                    Selecciona uno...</option>
+                <option value="diesel" {% if form_data and form_data.combustible=='diesel' %}selected{% endif %}>Diesel
+                </option>
+                <option value="gasolina" {% if form_data and form_data.combustible=='gasolina' %}selected{% endif %}>
+                    Gasolina</option>
+                <option value="electrico" {% if form_data and form_data.combustible=='electrico' %}selected{% endif %}>
+                    Eléctrico</option>
+                <option value="hibrido" {% if form_data and form_data.combustible=='hibrido' %}selected{% endif %}>
+                    Híbrido</option>
+                <option value="glp" {% if form_data and form_data.combustible=='glp' %}selected{% endif %}>GLP</option>
+                <option value="gnc" {% if form_data and form_data.combustible=='gnc' %}selected{% endif %}>GNC</option>
+                <option value="otro" {% if form_data and form_data.combustible=='otro' %}selected{% endif %}>Otro
+                </option>
+            </select>
+        </div>
+        <div>
+            <label for="km">Kilómetros:</label>
+            <input type="number" id="km" name="km" min="0" value="{{ form_data.km if form_data else '' }}" required
+                placeholder="Ej: 50000">
+        </div>
+
+        {# --- CAMPO ETIQUETA MODIFICADO A SELECT --- #}
+        <div>
+            <label for="etiqueta">Etiqueta Medioambiental (Opcional):</label>
+            <select id="etiqueta" name="etiqueta">
+                <option value="" {% if not form_data or not form_data.etiqueta %}selected{% endif %}>
+                    (Sin etiqueta o no aplica)</option>
+                <option value="0 Emisiones" {% if form_data and form_data.etiqueta=='0 Emisiones' %}selected{% endif %}>
+                    0 Emisiones (Azul)</option>
+                <option value="ECO" {% if form_data and form_data.etiqueta=='ECO' %}selected{% endif %}>ECO (Azul y
+                    Verde)</option>
+                <option value="C" {% if form_data and form_data.etiqueta=='C' %}selected{% endif %}>C (Verde)</option>
+                <option value="B" {% if form_data and form_data.etiqueta=='B' %}selected{% endif %}>B (Amarilla)
+                </option>
+                <option value="A" {% if form_data and form_data.etiqueta=='A' %}selected{% endif %}>A (Sin etiqueta, más
+                    contaminante)</option>
+                <option value="Otra" {% if form_data and form_data.etiqueta=='Otra' %}selected{% endif %}>Otra
+                    (especificar en descripción)</option>
+            </select>
+        </div>
+        {# --- FIN DE CAMPO ETIQUETA MODIFICADO --- #}
+
+        <div>
+            <label for="localidad">Localidad (Opcional):</label>
+            <input type="text" id="localidad" name="localidad" value="{{ form_data.localidad if form_data else '' }}"
+                placeholder="Ej: Madrid">
+        </div>
+        <div>
+            <label for="descripcion">Descripción (Opcional):</label>
+            <textarea id="descripcion" name="descripcion" rows="3"
+                placeholder="Añade detalles extra sobre el coche...">{{ form_data.descripcion if form_data else '' }}</textarea>
+        </div>
+
+        {# --- SECCIÓN DE SUBIDA DE IMÁGENES --- #}
+        {# Para un envío 100% Flask, el name="car_images" es el que usa request.files.getlist("car_images") #}
+        <div>
+            <label for="car-images">Imágenes del Coche (Selecciona hasta 6):</label>
+            <input type="file" id="car-images" name="car_images" multiple accept="image/*">
+            <small>Puedes seleccionar varias imágenes a la vez (Ctrl+clic o Shift+clic).</small>
+        </div>
+
+        {# El div de previsualización de imágenes y el input oculto son para la versión JS #}
+        {# Si es 100% Flask, no son necesarios aquí, pero no hacen daño si el JS se elimina #}
+        <div id="image-preview-container" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+            {# Las previsualizaciones se añadirían aquí con JS #}
+        </div>
+        <input type="hidden" id="imagen_urls" name="imagen_urls_hidden">
+
+
+        {# El botón de submit. Si es 100% Flask, el ID no es crucial aquí. #}
+        <button type="submit" class="primary" id="submit-button">Publicar Coche</button>
+
+        {# El indicador de carga es para JS #}
+        <div id="loading-indicator" style="display: none; margin-top: 10px;">
+            <p>Publicando coche y subiendo imágenes...</p>
+        </div>
+    </form>
+</div>
+
+{# --- SCRIPT DE JAVASCRIPT --- #}
+{# Si quieres que esta página funcione 100% con Python/Flask para el envío, #}
+{# entonces el siguiente script de JavaScript no sería necesario o se modificaría mucho. #}
+{# El código que te di para app.py (Flask) que maneja la subida de imágenes #}
+{# NO depende de este script de JavaScript. #}
+{# Por ahora lo dejo, pero ten en cuenta que si el form tiene action y enctype, #}
+{# el envío tradicional de Flask se activará al pulsar el botón de submit, #}
+{# a menos que el JS haga event.preventDefault(). #}
+<script>
+    const imageInput = document.getElementById('car-images');
+    const previewContainer = document.getElementById('image-preview-container');
+    const hiddenUrlsInput = document.getElementById('imagen_urls');
+    const publishForm = document.getElementById('publish-car-form'); // Este es el form
+    const submitButton = document.getElementById('submit-button');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const generalErrorDiv = document.getElementById('general-error');
+
+    let uploadedImageUrls = [];
+    let uploadPromises = [];
+
+    // Si NO quieres usar JavaScript para el envío y la subida de imágenes,
+    // puedes comentar o eliminar todo el siguiente código JavaScript.
+    // El form con method="POST" y enctype="multipart/form-data"
+    // enviará los datos al endpoint de Flask especificado en 'action'.
+
+    // Código JS para previsualización y subida asíncrona (si se desea mantener)
+    if (imageInput && previewContainer && publishForm && submitButton) { // Asegurarse que los elementos existen
+
+        imageInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (!files || files.length === 0) {
+                previewContainer.innerHTML = ''; // Limpiar previsualizaciones si no hay archivos
+                uploadPromises = [];
+                uploadedImageUrls = [];
+                return;
+            }
+
+            if ((uploadedImageUrls.length + files.length) > 6) {
+                alert('Puedes subir un máximo de 6 imágenes en total.');
+                imageInput.value = '';
+                return;
+            }
+
+            // Si se seleccionan nuevos archivos, ¿quieres reemplazar o añadir?
+            // Por ahora, vamos a reemplazar las previsualizaciones y las promesas de subida.
+            previewContainer.innerHTML = '';
+            uploadPromises = [];
+            // uploadedImageUrls = []; // Decide si resetear esto también. Si no, permite añadir a las ya subidas.
+
+
+            for (const file of files) {
+                const previewElement = document.createElement('div');
+                // ... (código de creación de previsualización como antes) ...
+                // Lo omito por brevedad, es el mismo que tenías para previsualizar
+
+                const img = document.createElement('img'); // Asegúrate de tener este código
+                img.style.maxWidth = '100px'; img.style.maxHeight = '100px'; img.style.objectFit = 'cover';
+                const reader = new FileReader();
+                reader.onload = (e) => { img.src = e.target.result; }
+                reader.readAsDataURL(file);
+                previewElement.appendChild(img);
+
+                const statusDiv = document.createElement('div'); // Asegúrate de tener este código
+                statusDiv.textContent = 'Pendiente'; // o 'Subiendo...' si subes inmediatamente
+                previewElement.appendChild(statusDiv);
+                previewContainer.appendChild(previewElement);
+
+                // Aquí la lógica original de 'uploadImage' si la subida es asíncrona
+                // uploadPromises.push(uploadImage(file, statusDiv, previewElement));
+            }
+        });
+
+        // Si el envío del formulario es manejado por JS (como estaba antes):
+        // publishForm.addEventListener('submit', async (event) => {
+        //    event.preventDefault(); // Previene el envío tradicional del formulario
+        //    // ... Aquí iría toda tu lógica de JS para subir imágenes y luego enviar datos del coche ...
+        //    // ... como la tenías configurada para interactuar con el backend FastAPI directamente.
+        //    // Este es el lugar donde decidirías si usar localStorage.getItem('authToken'),
+        //    // y hacer los fetch a /upload-image/ y /coches/ de FastAPI.
+        // });
+
+        // Si el formulario se envía de forma tradicional a Flask, el JS de arriba
+        // (el addEventListener para 'submit') no debería hacer event.preventDefault().
+        // O, si el JS está solo para previsualizaciones, no necesita manejar el submit.
+    }
+</script>
+{% endblock %}

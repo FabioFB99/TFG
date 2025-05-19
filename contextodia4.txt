@@ -1,0 +1,49 @@
+Hola, ayer estábamos trabajando en la implementación de la funcionalidad de chat para mi proyecto TFG2 (Backend FastAPI, Frontend Flask).
+Objetivo Principal de la Sesión Anterior:
+Solucionar un error 404 Not Found que ocurría al intentar acceder a los endpoints de chat definidos en Back/routers/chat.py. El frontend Flask intentaba llamar a POST /chat/conversations/initiate y GET /chat/conversations/me, pero el backend no reconocía estas rutas.
+Estado Actual y Diagnóstico:
+Los logs de inicio del servidor FastAPI mostraban consistentemente la siguiente advertencia:
+ADVERTENCIA (main.py): No se pudo importar 'chat_router' desde 'routers'. Error: cannot import name 'get_current_active_user' from 'auth_config' (...). Los endpoints de chat no estarán disponibles si están definidos en un router separado.
+INFO (main.py): Router de Chat NO incluido (no se importó o es None).
+Use code with caution.
+Identificamos que el problema era un ImportError dentro de Back/routers/chat.py. Específicamente, chat.py intentaba importar la función de dependencia get_current_active_user desde auth_config.py, cuando en realidad esta función estaba definida en Back/main.py.
+Última Acción Propuesta (Pendiente de Implementar/Verificar):
+La solución recomendada fue refactorizar para evitar una posible importación circular y organizar mejor las dependencias:
+Crear un nuevo archivo Back/dependencies.py.
+Mover la función get_current_active_user (junto con su dependencia oauth2_scheme y las importaciones necesarias como jwt, HTTPException, models_user, crud_user, SECRET_KEY, ALGORITHM) desde Back/main.py al nuevo archivo Back/dependencies.py.
+Modificar Back/main.py para:
+Eliminar la definición local de get_current_active_user.
+Importar get_current_active_user desde dependencies (ej. from dependencies import get_current_active_user).
+Modificar Back/routers/chat.py para:
+Importar get_current_active_user desde dependencies (ej. from dependencies import get_current_active_user) en lugar de auth_config o main.
+Archivos Clave Relevantes (Backend):
+Back/main.py (aplicación principal FastAPI, donde se incluye el router)
+Back/routers/chat.py (define los endpoints de la API de chat)
+Back/crud/crud_chat.py (lógica de base de datos para chats)
+Back/models/models_chat.py (modelos Pydantic para chats)
+Back/auth_config.py (configuración de autenticación, pero no get_current_active_user)
+Back/dependencies.py (archivo propuesto para get_current_active_user)
+Objetivo al Retomar:
+Implementar la refactorización propuesta moviendo get_current_active_user a Back/dependencies.py.
+Actualizar las importaciones en Back/main.py y Back/routers/chat.py para que usen dependencies.py.
+Reiniciar el servidor FastAPI y verificar que los logs de inicio ya no muestren la advertencia de importación del chat_router y, en su lugar, indiquen INFO (main.py): Router de Chat incluido..
+Probar nuevamente desde el frontend (o usando Swagger UI/Postman) los endpoints de chat:
+POST /chat/conversations/initiate?car_id={un_car_id_valido}
+GET /chat/conversations/me
+Para confirmar que el error 404 se ha resuelto.
+Si los 404 persisten, continuar depurando la definición de los endpoints en routers/chat.py (especialmente el uso de Query para car_id).
+Estructura de Carpetas del Backend (Confirmada como correcta):
+Back/
+├── main.py
+├── auth_config.py
+├── firebase_config.py
+├── crud/
+│   ├── __init__.py
+│   ├── crud_chat.py, crud_coche.py, crud_user.py
+├── models/
+│   ├── __init__.py
+│   ├── models_chat.py, models_coche.py, models_user.py
+├── routers/
+│   ├── __init__.py  (vacío)
+│   └── chat.py
+└── (dependencies.py) <-- Archivo a crear

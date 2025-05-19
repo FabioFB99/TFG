@@ -1,0 +1,255 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}
+Editar Coche - {% if coche %}{{ coche.marca }} {{ coche.modelo }}{% else %}Coche No Encontrado{% endif %}
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Estilos generales para el contenedor del formulario */
+    .form-container {
+        max-width: 700px;
+        /* O el ancho que prefieras */
+        margin: 20px auto;
+        padding: 25px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #333;
+    }
+
+    .form-container div {
+        /* Espaciado para cada grupo de label-input */
+        margin-bottom: 18px;
+    }
+
+    .form-container label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .form-container input[type="text"],
+    .form-container input[type="number"],
+    .form-container select,
+    .form-container textarea {
+        width: 100%;
+        /* Usa 100% y box-sizing para manejar padding/border */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        /* Importante para que el padding no aumente el ancho total */
+        font-size: 1em;
+    }
+
+    .form-container input[type="file"] {
+        padding: 8px;
+        /* Un poco menos para inputs de archivo */
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-container textarea {
+        min-height: 100px;
+        /* Altura mínima para el textarea */
+        resize: vertical;
+        /* Permitir redimensionar verticalmente */
+    }
+
+    .form-actions {
+        /* Contenedor para los botones */
+        margin-top: 25px;
+        display: flex;
+        gap: 10px;
+        /* Espacio entre botones */
+        justify-content: flex-start;
+        /* Alinear botones a la izquierda */
+    }
+
+    .form-actions button[type="submit"],
+    .form-actions .cancel-link {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1em;
+        text-decoration: none;
+        /* Para el enlace de cancelar */
+        display: inline-block;
+        /* Para el enlace de cancelar */
+    }
+
+    .form-actions button[type="submit"] {
+        background-color: #28a745;
+        /* Verde para guardar */
+        color: white;
+    }
+
+    .form-actions button[type="submit"]:hover {
+        background-color: #218838;
+    }
+
+    .form-actions .cancel-link {
+        background-color: #6c757d;
+        /* Gris para cancelar */
+        color: white;
+    }
+
+    .form-actions .cancel-link:hover {
+        background-color: #5a6268;
+    }
+
+    /* Estilos para mostrar imágenes actuales */
+    .current-images-label {
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .current-images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+        margin-bottom: 10px;
+        /* Espacio después de las imágenes */
+    }
+
+    .current-images-grid img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .current-images-grid .no-images-current {
+        grid-column: 1 / -1;
+        /* Ocupar todo el ancho si no hay imágenes */
+        text-align: center;
+        padding: 10px;
+        color: #777;
+        font-style: italic;
+    }
+
+    .form-container small {
+        /* Para los textos de ayuda pequeños */
+        font-size: 0.85em;
+        color: #666;
+        display: block;
+        /* Para que ocupe su propia línea */
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    {% if coche and coche.id %} {# La variable 'coche' debe tener datos y un ID #}
+    <h2>Editar Coche: {{ coche.marca }} {{ coche.modelo }}</h2>
+
+    <form method="POST" action="{{ url_for('edit_car_page', car_id=coche.id) }}" enctype="multipart/form-data">
+
+        <div>
+            <label for="marca">Marca:</label>
+            <input type="text" id="marca" name="marca" value="{{ coche.marca or '' }}" required>
+        </div>
+        <div>
+            <label for="modelo">Modelo:</label>
+            <input type="text" id="modelo" name="modelo" value="{{ coche.modelo or '' }}" required>
+        </div>
+        <div>
+            <label for="ano">Año de Fabricación:</label>
+            <input type="number" id="ano" name="ano" min="1900" max="{{ now.year if now else '2025' }}"
+                value="{{ coche.ano or '' }}" required placeholder="Ej: 2020">
+        </div>
+        <div>
+            <label for="cv">CV (Caballos de Vapor):</label>
+            <input type="number" id="cv" name="cv" min="1" value="{{ coche.cv or '' }}" required placeholder="Ej: 150">
+        </div>
+        <div>
+            <label for="color">Color:</label>
+            <input type="text" id="color" name="color" value="{{ coche.color or '' }}" required placeholder="Ej: Rojo">
+        </div>
+        <div>
+            <label for="combustible">Tipo de Combustible:</label>
+            <select id="combustible" name="combustible" required>
+                <option value="diesel" {% if coche.combustible=='diesel' %}selected{% endif %}>Diesel</option>
+                <option value="gasolina" {% if coche.combustible=='gasolina' %}selected{% endif %}>Gasolina</option>
+                <option value="electrico" {% if coche.combustible=='electrico' %}selected{% endif %}>Eléctrico</option>
+                <option value="hibrido" {% if coche.combustible=='hibrido' %}selected{% endif %}>Híbrido</option>
+                <option value="glp" {% if coche.combustible=='glp' %}selected{% endif %}>GLP</option>
+                <option value="gnc" {% if coche.combustible=='gnc' %}selected{% endif %}>GNC</option>
+                <option value="otro" {% if coche.combustible=='otro' %}selected{% endif %}>Otro</option>
+            </select>
+        </div>
+        <div>
+            <label for="km">Kilómetros:</label>
+            <input type="number" id="km" name="km" min="0" value="{{ coche.km or '' }}" required
+                placeholder="Ej: 50000">
+        </div>
+        <div>
+            <label for="etiqueta">Etiqueta Medioambiental:</label>
+            <select id="etiqueta" name="etiqueta">
+                <option value="" {% if not coche.etiqueta %}selected{% endif %}>(Sin etiqueta o no aplica)</option>
+                <option value="0 Emisiones" {% if coche.etiqueta=='0 Emisiones' %}selected{% endif %}>0 Emisiones (Azul)
+                </option>
+                <option value="ECO" {% if coche.etiqueta=='ECO' %}selected{% endif %}>ECO (Azul y Verde)</option>
+                <option value="C" {% if coche.etiqueta=='C' %}selected{% endif %}>C (Verde)</option>
+                <option value="B" {% if coche.etiqueta=='B' %}selected{% endif %}>B (Amarilla)</option>
+                <option value="A" {% if coche.etiqueta=='A' %}selected{% endif %}>A (Sin etiqueta)</option>
+                <option value="Otra" {% if coche.etiqueta=='Otra' %}selected{% endif %}>Otra</option>
+            </select>
+        </div>
+        <div>
+            <label for="localidad">Localidad (Opcional):</label>
+            <input type="text" id="localidad" name="localidad" value="{{ coche.localidad if coche.localidad else '' }}"
+                placeholder="Ej: Madrid">
+        </div>
+        <div>
+            <label for="descripcion">Descripción (Opcional):</label>
+            <textarea id="descripcion" name="descripcion" rows="4"
+                placeholder="Añade detalles extra sobre el coche...">{{ coche.descripcion if coche.descripcion else '' }}</textarea>
+        </div>
+
+        <div>
+            <p class="current-images-label">Imágenes Actuales:</p>
+            {% if coche.imagen_urls and coche.imagen_urls|length > 0 %}
+            <div class="current-images-grid">
+                {% for img_url in coche.imagen_urls %}
+                <img src="{{ img_url }}" alt="Imagen actual del coche">
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="current-images-grid no-images-current"><small>Este coche no tiene imágenes actualmente.</small>
+            </p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="car-images-new">Subir Nuevas Imágenes (Opcional):</label>
+            <input type="file" id="car-images-new" name="car_images_new" multiple accept="image/*">
+            <small>Si seleccionas imágenes aquí, reemplazarán TODAS las imágenes actuales del coche.</small>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit">Guardar Cambios</button>
+            <a href="{{ url_for('my_cars_page') }}" class="cancel-link">Cancelar</a>
+        </div>
+    </form>
+    {% else %}
+    <h2>Coche no encontrado</h2>
+    <p>El coche que intentas editar no se pudo cargar o no existe.</p>
+    <p><a href="{{ url_for('my_cars_page') }}">Volver a Mis Coches</a></p>
+    {% endif %}
+</div>
+{% endblock %}

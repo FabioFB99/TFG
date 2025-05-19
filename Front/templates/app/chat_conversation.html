@@ -1,0 +1,228 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}
+Chat sobre {{ conversation_details.car_marca if conversation_details else 'Coche' }} {{ conversation_details.car_modelo
+if conversation_details else '' }}
+con {{ conversation_details.otro_participante_alias if conversation_details else 'Usuario' }}
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    .chat-page-container {
+        max-width: 700px;
+        margin: 20px auto;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 160px);
+        /* Ajusta según la altura de tu header/footer */
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .chat-header {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        background-color: #f8f9fa;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .chat-header h2 {
+        margin: 0;
+        font-size: 1.3em;
+        color: #333;
+    }
+
+    .chat-header .back-link-chat {
+        font-size: 0.9em;
+        color: #007bff;
+        text-decoration: none;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .chat-header .back-link-chat:hover {
+        text-decoration: underline;
+    }
+
+    .messages-area {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background-color: #f4f7f9;
+        /* Un fondo ligeramente diferente para el área de mensajes */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .message-bubble {
+        max-width: 75%;
+        padding: 10px 15px;
+        border-radius: 18px;
+        margin-bottom: 10px;
+        line-height: 1.4;
+        font-size: 0.95em;
+        word-wrap: break-word;
+    }
+
+    .message-bubble.sent {
+        background-color: #007bff;
+        /* Azul para mensajes enviados por el usuario actual */
+        color: white;
+        align-self: flex-end;
+        /* Alinea a la derecha */
+        border-bottom-right-radius: 5px;
+        /* Para darle forma de bocadillo */
+    }
+
+    .message-bubble.received {
+        background-color: #e9ecef;
+        /* Gris claro para mensajes recibidos */
+        color: #333;
+        align-self: flex-start;
+        /* Alinea a la izquierda */
+        border-bottom-left-radius: 5px;
+        /* Para darle forma de bocadillo */
+    }
+
+    .message-meta {
+        font-size: 0.75em;
+        color: #888;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .message-bubble.sent .message-meta {
+        text-align: right;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .message-bubble.received .message-meta {
+        text-align: left;
+    }
+
+
+    .message-form-area {
+        padding: 15px;
+        border-top: 1px solid #eee;
+        background-color: #f8f9fa;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .message-form-area form {
+        display: flex;
+        gap: 10px;
+    }
+
+    .message-form-area textarea {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        /* Más redondeado */
+        resize: none;
+        /* Evitar que el usuario lo redimensione manualmente */
+        min-height: 40px;
+        /* Altura mínima */
+        font-size: 1em;
+        line-height: 1.4;
+        box-sizing: border-box;
+    }
+
+    .message-form-area button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        /* Más redondeado */
+        cursor: pointer;
+        font-size: 1em;
+    }
+
+    .message-form-area button:hover {
+        background-color: #0056b3;
+    }
+
+    .no-messages {
+        text-align: center;
+        color: #777;
+        margin-top: 30px;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-page-container">
+    <div class="chat-header">
+        <a href="{{ url_for('chats_list_page') }}" class="back-link-chat">« Volver a Mis Chats</a>
+        {% if conversation_details %}
+        <h2>
+            Chat con {{ conversation_details.otro_participante_alias }}
+        </h2>
+        <p style="font-size:0.9em; color:#555; margin: 5px 0 0 0;">
+            Sobre: <a href="{{ url_for('view_car_page', car_id=conversation_details.car_id) }}" target="_blank"
+                title="Ver detalles del coche en nueva pestaña">
+                {{ conversation_details.car_marca }} {{ conversation_details.car_modelo }}
+            </a>
+        </p>
+        {% else %}
+        <h2>Chat</h2>
+        {% endif %}
+    </div>
+
+    <div class="messages-area" id="messages-area">
+        {% if error_message %}
+        <p class="message error">{{ error_message }}</p>
+        {% endif %}
+
+        {% if messages and messages|length > 0 %}
+        {% for msg in messages %}
+        <div class="message-bubble {{ 'sent' if msg.sender_id == current_user_id else 'received' }}">
+            <p style="margin:0;">{{ msg.contenido }}</p>
+            <span class="message-meta">
+                {% if msg.sender_id != current_user_id and msg.sender_alias %}
+                {{ msg.sender_alias }} -
+                {% endif %}
+                {{ msg.timestamp.strftime('%H:%M') if msg.timestamp else 'Ahora' }}
+                {# {{ msg.timestamp.strftime('%d/%m %H:%M') if msg.timestamp else 'Ahora' }} #}
+            </span>
+        </div>
+        {% endfor %}
+        {% elif not error_message %}
+        <p class="no-messages">No hay mensajes en esta conversación todavía. ¡Envía el primero!</p>
+        {% endif %}
+    </div>
+
+    <div class="message-form-area">
+        {# El action de este formulario apuntará a la misma página para procesar el envío del mensaje #}
+        <form method="POST" action="{{ url_for('chat_conversation_page', conversation_id=conversation_id_param) }}">
+            <textarea name="contenido" placeholder="Escribe tu mensaje aquí..." rows="2" required></textarea>
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts_extra %}
+<script>
+    // Scroll automático al final del área de mensajes al cargar la página
+    // y después de enviar un mensaje (cuando la página se recargue).
+    document.addEventListener('DOMContentLoaded', function () {
+        const messagesArea = document.getElementById('messages-area');
+        if (messagesArea) {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        // Auto-focus en el textarea
+        const textarea = document.querySelector('.message-form-area textarea');
+        if (textarea) {
+            textarea.focus();
+        }
+    });
+</script>
+{% endblock %}

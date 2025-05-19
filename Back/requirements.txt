@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+firebase-admin
+pydantic
+python-dotenv
+werkzeug
+python-jose[cryptography]
+python-multipart

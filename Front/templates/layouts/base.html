@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mi Aplicación TFG2{% endblock %}</title>
+    {# Enlace al CSS global que está en static/css/style.css #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {# Bloque para añadir CSS específico de una página si es necesario #}
+    {% block head_extra %}{% endblock %}
+</head>
+
+<body>
+    <header>
+        <h1><a href="{{ url_for('index') }}" style="color:white; text-decoration:none;">Mi Aplicación TFG2</a></h1>
+
+        <nav>
+            {% if session.get('user_alias') %}
+            {# Enlaces visibles solo para usuarios logueados #}
+            <a href="{{ url_for('main_page') }}">Inicio</a> {# Enlace a la página principal de la app #}
+            <a href="{{ url_for('profile_page') }}">Perfil</a>
+            <a href="{{ url_for('publish_car_page') }}" title="Publicar nuevo coche">+ Publicar Coche</a>
+            <a href="{{ url_for('my_cars_page') }}">Mis Coches</a>
+            <a href="{{ url_for('chats_list_page') }}">Chats</a> {# <--- LÍNEA AÑADIDA #} {% endif %} </nav>
+
+                <div class="auth-links">
+                    {% if session.get('user_alias') %}
+                    <span>Hola, {{ session.get('user_alias') }}!</span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">Cerrar Sesión</a>
+                    {% else %}
+                    {# Si no está logueado, solo mostramos enlaces para login/registro #}
+                    {# (Aunque si llega aquí sin loguearse, probablemente fue un error de flujo #}
+                    {# ya que las páginas protegidas deberían redirigir a login) #}
+                    <a href="{{ url_for('login') }}">Iniciar Sesión</a>
+                    <a href="{{ url_for('register') }}">Registrarse</a>
+                    {% endif %}
+                </div>
+    </header>
+
+    <div class="main-content">
+        {# Mostrar mensajes flash (de éxito, error, etc.) #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="message {{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {# El contenido específico de cada página que herede de esta base irá aquí #}
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <footer>
+        <p>© {{ now.year if now else '2024' }} Tu Nombre o Nombre del Proyecto. Todos los derechos reservados.</p>
+    </footer>
+
+    {# Bloque para añadir JavaScript específico de una página al final del body si es necesario #}
+    {% block scripts_extra %}{% endblock %}
+</body>
+
+</html>

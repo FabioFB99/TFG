@@ -1,0 +1,119 @@
+Contexto para Mañana:
+"Hola, ayer estábamos trabajando en mi proyecto de fin de grado (fullstack Python con Flask frontend y FastAPI backend, usando Firebase).
+Objetivo Actual:
+Estábamos listos para implementar la interfaz de usuario en el frontend (en la página de perfil - profile.html) para que el usuario pueda editar su nombre/apellido y eliminar su cuenta, utilizando los endpoints PUT /usuarios/me y DELETE /usuarios/me que ya creamos en el backend.
+Estructura del Frontend (carpeta front/templates/):
+templates/
+├── layouts/
+│   └── base.html
+├── auth/
+│   ├── login.html
+│   └── register.html
+└── app/
+    ├── main_page.html
+    ├── profile.html
+    └── publish_car.html
+Use code with caution.
+Último Código Relevante (Plantilla profile.html que íbamos a llenar):
+{% extends "layouts/base.html" %}
+
+{% block title %}Mi Perfil - TFG2{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* ... (Estilos que definimos para profile.html) ... */
+    .profile-form div, .delete-section div { margin-bottom: 15px; }
+    .profile-form label, .delete-section label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .profile-form input[type="text"] { width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .profile-form .readonly-field { background-color: #f0f0f0; color: #555; cursor: not-allowed; }
+    .button-group { margin-top: 20px; display: flex; gap: 10px; }
+    .button-group button, .delete-section button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; }
+    .button-group .save-btn { background-color: #28a745; color: white; }
+    .button-group .save-btn:hover { background-color: #218838; }
+    .delete-section { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+    .delete-section h3 { color: #c0392b; }
+    .delete-section .delete-btn { background-color: #dc3545; color: white; }
+    .delete-section .delete-btn:hover { background-color: #c82333; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container form-container">
+    <h2>Mi Perfil</h2>
+    {% if user_info %}
+        <form method="POST" action="{{ url_for('profile_page') }}" class="profile-form">
+            <div>
+                <label for="alias">Alias (Nombre de Usuario):</label>
+                <input type="text" id="alias" name="alias" value="{{ user_info.alias }}" class="readonly-field" readonly>
+                <small>El alias no se puede cambiar.</small>
+            </div>
+            <div>
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" value="{{ user_info.nombre if user_info.nombre else '' }}" required>
+            </div>
+            <div>
+                <label for="apellido">Apellido:</label>
+                <input type="text" id="apellido" name="apellido" value="{{ user_info.apellido if user_info.apellido else '' }}" required>
+            </div>
+            <div class="button-group">
+                <button type="submit" name="action" value="update_profile" class="save-btn">Guardar Cambios</button>
+            </div>
+        </form>
+        <div class="delete-section">
+            <h3>Eliminar Cuenta</h3>
+            <p>Esta acción es irreversible...</p>
+            <form method="POST" action="{{ url_for('profile_page') }}" onsubmit="return confirm('¿Estás SEGURO de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.');">
+                <button type="submit" name="action" value="delete_account" class="delete-btn">Eliminar Mi Cuenta Permanentemente</button>
+            </form>
+        </div>
+    {% else %}
+        <p>No se pudo cargar la información de tu perfil...</p>
+    {% endif %}
+</div>
+{% endblock %}
+Use code with caution.
+Html
+Último Código Relevante (app.py - la ruta /profile que íbamos a completar):
+# En TFG2/front/app.py
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile_page():
+    token = session.get('token')
+    if not token:
+        flash("Tu sesión ha expirado o no es válida.", "error")
+        return redirect(url_for('login'))
+    headers = {"Authorization": f"Bearer {token}"}
+    user_info_data = None
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == "update_profile":
+            # Lógica para actualizar perfil que ya implementamos
+            nombre = request.form.get('nombre')
+            apellido = request.form.get('apellido')
+            # ... (petición PUT al backend) ...
+            # ... (manejo de respuesta y flash messages) ...
+            return redirect(url_for('profile_page')) # o a donde corresponda
+        elif action == "delete_account":
+            # Lógica para eliminar cuenta que ya implementamos
+            # ... (petición DELETE al backend) ...
+            # ... (manejo de respuesta, limpieza de sesión y flash messages) ...
+            return redirect(url_for('login')) # o a donde corresponda
+
+    # Lógica GET para mostrar el perfil
+    try:
+        response_user_me = requests.get(f"{BACKEND_API_URL}/usuarios/me", headers=headers)
+        if response_user_me.status_code == 200:
+            user_info_data = response_user_me.json()
+        else:
+            flash(f"No se pudieron obtener los datos de tu perfil...", "error")
+            return redirect(url_for('main_page'))
+    except requests.exceptions.RequestException as e:
+        flash("Error de conexión al obtener datos del perfil.", "error")
+        return redirect(url_for('main_page'))
+    
+    return render_template('app/profile.html', user_info=user_info_data)
+Use code with caution.
+Python
+Resumen del estado del Backend:
+El backend ya tiene los endpoints PUT /usuarios/me y DELETE /usuarios/me listos y probados (o al menos, listos para ser probados por el frontend).

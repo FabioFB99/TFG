@@ -1,0 +1,257 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}
+Detalles: {% if coche %}{{ coche.marca }} {{ coche.modelo }}{% else %}Coche No Encontrado{% endif %}
+{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Estilos adaptados de edit_car.html y mejorados para visualización */
+    .details-view-container {
+        max-width: 700px;
+        margin: 20px auto;
+        padding: 25px;
+        background-color: #ffffff;
+        /* Fondo más limpio */
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .details-view-container h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+        font-size: 1.8em;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+
+    .detail-section {
+        margin-bottom: 20px;
+    }
+
+    .detail-section h3 {
+        /* Para títulos de secciones como "Información General", "Imágenes" */
+        font-size: 1.3em;
+        color: #444;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 8px;
+    }
+
+    .detail-item {
+        display: flex;
+        margin-bottom: 12px;
+        font-size: 1em;
+        line-height: 1.6;
+    }
+
+    .detail-item strong {
+        flex-basis: 200px;
+        /* Ancho fijo para las etiquetas */
+        flex-shrink: 0;
+        /* Evitar que se encoja */
+        font-weight: 600;
+        /* Un poco más de peso */
+        color: #555;
+        padding-right: 10px;
+        /* Espacio entre etiqueta y valor */
+    }
+
+    .detail-item span,
+    .detail-item div.value {
+        /* div.value para descripciones multilínea */
+        flex-grow: 1;
+        color: #333;
+        word-break: break-word;
+        /* Para textos largos */
+    }
+
+    .detail-item div.value p {
+        margin: 0;
+        /* Resetear márgenes si la descripción es un párrafo */
+        white-space: pre-wrap;
+        /* Respetar saltos de línea y espacios de la descripción */
+    }
+
+    /* Estilos para mostrar imágenes */
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .images-grid img {
+        width: 100%;
+        height: 100px;
+        /* O ajustar a 120px para que sean cuadradas */
+        object-fit: cover;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        /* Sugiere que se puede hacer clic (para un futuro Lightbox) */
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .images-grid img:hover {
+        transform: scale(1.05);
+    }
+
+    .no-images-text {
+        color: #777;
+        font-style: italic;
+        padding: 10px 0;
+    }
+
+    /* Botón de acción */
+    .action-buttons {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        text-align: center;
+        /* Centrar el botón */
+    }
+
+    .action-buttons .contact-btn {
+        /* Ahora será un <a> con clase .contact-btn */
+        display: inline-block;
+        /* Para que el padding y otras propiedades de bloque funcionen en <a> */
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1.1em;
+        background-color: #007bff;
+        /* Azul primario */
+        color: white !important;
+        /* Asegurar color blanco para el texto del enlace */
+        text-decoration: none !important;
+        /* Quitar subrayado del enlace */
+        transition: background-color 0.3s ease;
+    }
+
+    .action-buttons .contact-btn:hover {
+        background-color: #0056b3;
+        color: white !important;
+    }
+
+    .back-link-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .back-link {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="details-view-container">
+    {% if coche and coche.id %}
+    <h2>{{ coche.marca }} {{ coche.modelo }}</h2>
+
+    <div class="detail-section">
+        <h3>Información General</h3>
+        {% if coche.propietario_alias %}
+        <div class="detail-item">
+            <strong>Propietario:</strong>
+            <span>{{ coche.propietario_alias }}</span>
+        </div>
+        {% endif %}
+        <div class="detail-item">
+            <strong>Marca:</strong>
+            <span>{{ coche.marca or 'No especificada' }}</span>
+        </div>
+        <div class="detail-item">
+            <strong>Modelo:</strong>
+            <span>{{ coche.modelo or 'No especificado' }}</span>
+        </div>
+        <div class="detail-item">
+            <strong>Año:</strong>
+            <span>{{ coche.ano or 'No especificado' }}</span>
+        </div>
+        <div class="detail-item">
+            <strong>CV:</strong>
+            <span>{{ coche.cv or 'No especificados' }} CV</span>
+        </div>
+        <div class="detail-item">
+            <strong>Color:</strong>
+            <span>{{ coche.color or 'No especificado' }}</span>
+        </div>
+        <div class="detail-item">
+            <strong>Combustible:</strong>
+            <span>{{ (coche.combustible | capitalize) if coche.combustible else 'No especificado' }}</span>
+        </div>
+        <div class="detail-item">
+            <strong>Kilómetros:</strong>
+            <span>{{ "{:,.0f}".format(coche.km | float) | replace(',', '.') if coche.km is not none else 'No
+                especificados' }} km</span>
+        </div>
+        <div class="detail-item">
+            <strong>Etiqueta:</strong>
+            <span>{{ coche.etiqueta or 'No especificada' }}</span>
+        </div>
+        <div class="detail-item">
+            <strong>Localidad:</strong>
+            <span>{{ coche.localidad or 'No especificada' }}</span>
+        </div>
+    </div>
+
+    {% if coche.descripcion %}
+    <div class="detail-section">
+        <h3>Descripción Adicional</h3>
+        <div class="detail-item">
+            {# Usamos un div para el valor para permitir párrafos o texto preformateado si es necesario #}
+            <strong> </strong> {# Para mantener alineación si no hay etiqueta explícita aquí #}
+            <div class="value">
+                <p>{{ coche.descripcion }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="detail-section">
+        <h3>Imágenes</h3>
+        {% if coche.imagen_urls and coche.imagen_urls|length > 0 %}
+        <div class="images-grid">
+            {% for img_url in coche.imagen_urls %}
+            <img src="{{ img_url }}" alt="Imagen de {{ coche.marca }} {{ coche.modelo }}">
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="no-images-text">Este coche no tiene imágenes disponibles.</p>
+        {% endif %}
+    </div>
+
+    <div class="action-buttons">
+        {# Solo mostrar el botón si el usuario está logueado y no es el propietario del coche #}
+        {% if session.get('user_alias') and coche.user_id != session.get('current_user_id_from_me_endpoint') %} {#
+        Asumimos que guardas el ID del usuario actual en sesión #}
+        <a href="{{ url_for('initiate_chat_with_owner', car_id=coche.id) }}" class="contact-btn">
+            Contactar con Propietario
+        </a>
+        {% elif not session.get('user_alias') %}
+        <p><small><a href="{{ url_for('login', next=request.url) }}">Inicia sesión</a> para contactar con el
+                propietario.</small></p>
+        {% endif %}
+        {# Si es el propietario, no se muestra el botón de contactar #}
+    </div>
+
+    {% else %}
+    <h2>Coche no encontrado</h2>
+    <p>Lo sentimos, los detalles del coche que buscas no están disponibles o el coche no existe.</p>
+    {% endif %}
+
+    <div class="back-link-container">
+        <a href="{{ url_for('main_page') }}" class="back-link">« Volver al listado principal</a>
+    </div>
+</div>
+{% endblock %}

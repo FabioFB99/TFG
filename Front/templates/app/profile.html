@@ -1,0 +1,136 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Mi Perfil - TFG2{% endblock %}
+
+{% block head_extra %}
+<style>
+    .profile-form div,
+    .delete-section div {
+        margin-bottom: 15px;
+    }
+
+    .profile-form label,
+    .delete-section label {
+        /* Aunque no hay label en delete */
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .profile-form input[type="text"] {
+        width: calc(100% - 22px);
+        /* Ajuste para padding y border */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .profile-form .readonly-field {
+        background-color: #f0f0f0;
+        color: #555;
+        cursor: not-allowed;
+    }
+
+    .button-group {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        /* Espacio entre botones */
+    }
+
+    .button-group button,
+    .delete-section button {
+        /* Aplicar a ambos tipos de botones */
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1em;
+    }
+
+    .button-group .save-btn {
+        background-color: #28a745;
+        /* Verde */
+        color: white;
+    }
+
+    .button-group .save-btn:hover {
+        background-color: #218838;
+    }
+
+    .delete-section {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+
+    .delete-section h3 {
+        color: #c0392b;
+        /* Rojo oscuro */
+    }
+
+    .delete-section .delete-btn {
+        background-color: #dc3545;
+        /* Rojo */
+        color: white;
+    }
+
+    .delete-section .delete-btn:hover {
+        background-color: #c82333;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container form-container"> {# Usamos form-container para algunos estilos base #}
+    <h2>Mi Perfil</h2>
+
+    {% if user_info %} {# Asumiremos que pasamos 'user_info' desde la ruta de Flask #}
+    <form method="POST" action="{{ url_for('profile_page') }}" class="profile-form">
+        {# Campo CSRF si usas Flask-WTF, para formularios simples no es estrictamente necesario por defecto #}
+        {# {{ form.csrf_token }} #}
+
+        <div>
+            <label for="alias">Alias (Nombre de Usuario):</label>
+            <input type="text" id="alias" name="alias" value="{{ user_info.alias }}" class="readonly-field" readonly>
+            <small>El alias no se puede cambiar.</small>
+        </div>
+
+        <div>
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" value="{{ user_info.nombre if user_info.nombre else '' }}"
+                required>
+        </div>
+
+        <div>
+            <label for="apellido">Apellido:</label>
+            <input type="text" id="apellido" name="apellido"
+                value="{{ user_info.apellido if user_info.apellido else '' }}" required>
+        </div>
+
+        <div class="button-group">
+            <button type="submit" name="action" value="update_profile" class="save-btn">Guardar Cambios</button>
+        </div>
+    </form>
+
+    {# La sección de coches ha sido eliminada de aquí #}
+
+    <div class="delete-section">
+        <h3>Eliminar Cuenta</h3>
+        <p>Esta acción es irreversible y eliminará permanentemente tu cuenta y todos tus datos asociados (incluyendo tus
+            coches publicados).</p>
+        <form method="POST" action="{{ url_for('profile_page') }}"
+            onsubmit="return confirm('¿Estás SEGURO de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.');">
+            {# Campo CSRF si es necesario #}
+            <button type="submit" name="action" value="delete_account" class="delete-btn">Eliminar Mi Cuenta
+                Permanentemente</button>
+        </form>
+    </div>
+
+    {% else %}
+    <p>No se pudo cargar la información de tu perfil. Por favor, intenta <a href="{{ url_for('login') }}">iniciar
+            sesión</a> de nuevo.</p>
+    {% endif %}
+</div>
+{% endblock %}

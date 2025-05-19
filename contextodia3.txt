@@ -1,0 +1,62 @@
+Resumen de la Sesión de Desarrollo TFG2 (Frontend Flask + Backend FastAPI) - [Fecha de Hoy]
+Objetivo Principal del Día:
+El objetivo principal ha sido desarrollar y depurar la funcionalidad del frontend en Flask para interactuar con el backend FastAPI, enfocándonos en la gestión de coches (publicar, listar, editar, eliminar) y la visualización de estos en diferentes páginas.
+Estado Actual del Proyecto y Puntos Clave Trabajados:
+Configuración Inicial y Errores Previos:
+Se resolvieron errores iniciales de ModuleNotFoundError en Uvicorn (relacionados con la ruta de importación del módulo de la aplicación FastAPI).
+Se corrigió un TemplateRuntimeError: No filter named 'escapejs' en Jinja2, cambiándolo a |tojson para pasar tokens de Flask a JavaScript.
+Publicación de Coches (publish_car.html y ruta /publish-car en Flask):
+Se trabajó en la lógica para que la página /publish-car permita subir múltiples imágenes y datos del coche.
+Decisión Clave: Se optó por un enfoque donde Flask actúa como intermediario:
+El formulario HTML en publish_car.html envía los datos (incluyendo archivos) a la ruta /publish-car de Flask (method="POST", enctype="multipart/form-data").
+La ruta Flask /publish-car recibe los archivos.
+Itera sobre cada archivo y lo envía al endpoint /upload-image/ del backend FastAPI.
+Recolecta las URLs de las imágenes devueltas por el backend.
+Construye el payload final del coche (con datos del formulario y las URLs de las imágenes).
+Envía este payload al endpoint /coches/ del backend FastAPI.
+Se modificó publish_car.html para que el campo "Etiqueta Medioambiental" sea un <select> en lugar de un input de texto.
+Se ajustó el JavaScript en publish_car.html para que no interfiera con el envío tradicional del formulario a Flask, o se consideró eliminarlo si solo era para subida asíncrona directa a FastAPI.
+Página "Mis Coches" (mycars.html y ruta /my-cars en Flask):
+Se creó una nueva página para que el usuario vea solo los coches que ha publicado.
+La plantilla mycars.html muestra los coches en tarjetas, incluyendo la primera imagen, marca, modelo y otros detalles.
+Se añadieron botones/enlaces "Editar" y "Eliminar" para cada coche.
+La ruta Flask /my-cars llama al endpoint /usuarios/me/coches/ del backend FastAPI para obtener los coches del usuario actual.
+Página de Inicio (main_page.html y ruta /main_page en Flask):
+Objetivo Modificado: Que esta página muestre todos los coches publicados en la plataforma, y que los coches pertenecientes al usuario actual tengan un enlace directo para "Editar", mientras que los de otros usuarios tengan un enlace (placeholder) para "Ver Detalles".
+La ruta Flask /main_page ahora:
+Obtiene el current_user_id (llamando a /usuarios/me del backend).
+Obtiene todos_los_coches (llamando a /coches/ del backend).
+Pasa current_user_id y todos_los_coches a la plantilla.
+La plantilla main_page.html itera sobre todos_los_coches y usa current_user_id para la lógica condicional de los enlaces.
+Se mantiene el script para guardar el authToken de la sesión de Flask en localStorage.
+Edición y Eliminación de Coches:
+Se creó la plantilla edit_car.html con un formulario pre-rellenado para modificar los datos de un coche. Permite subir nuevas imágenes que reemplazan a las antiguas.
+Se implementaron las rutas Flask /edit-car/<car_id> (GET para mostrar, POST para actualizar) y /delete-car/<car_id> (POST para eliminar).
+Estas rutas Flask interactúan con los endpoints GET /coches/{coche_id}, PUT /coches/{coche_id}, y DELETE /coches/{coche_id} del backend FastAPI.
+El backend (crud_coche.py) fue modificado para que al eliminar un coche, también se eliminen sus imágenes físicas del servidor.
+Depuración de Problemas de Visualización de Coches:
+Se experimentó un problema donde mycars.html y main_page.html mostraban "Aún no hay coches..." a pesar de que existían.
+Se identificó (con ayuda de logs del backend) un error 400 The query requires an index. en Firestore para la consulta que obtenía los coches del usuario y los ordenaba por marca.
+Solución Aplicada: Se creó el índice compuesto requerido en Firebase Firestore.
+Refactorización en app.py (Flask):
+Se introdujo una función auxiliar make_api_request para centralizar la lógica de las llamadas requests al backend FastAPI, incluyendo el manejo de tokens, cabeceras y errores básicos.
+Todas las rutas que interactúan con el backend se actualizaron para usar esta función auxiliar.
+Estado Pendiente / Próximos Pasos (cuando retomemos):
+Verificar si la lista completa de coches ahora se muestra correctamente en main_page.html después de la creación del índice de Firestore y con la lógica de app.py actualizada.
+Probar exhaustivamente el flujo de editar un coche.
+Probar exhaustivamente el flujo de eliminar un coche (verificando que tanto el documento en Firestore como los archivos de imagen en el servidor se eliminen).
+(Opcional) Implementar la página "Ver Detalles" para coches de otros usuarios en main_page.html.
+(Opcional) Añadir el campo propietario_alias al modelo CocheDisplay en el backend y mostrarlo en la main_page.html.
+Archivos Clave Modificados Hoy:
+Frontend (Flask):
+app.py (rutas /main_page, /my-cars, /publish-car, /edit-car, /delete-car, función make_api_request)
+templates/layouts/base.html (enlace a "Mis Coches")
+templates/app/main_page.html (lógica para mostrar todos los coches con enlaces condicionales)
+templates/app/mycars.html (botones Editar/Eliminar)
+templates/app/publish_car.html (adaptada para envío 100% Flask y <select> para etiqueta)
+templates/app/edit_car.html (nueva plantilla)
+Backend (FastAPI):
+Back/main.py (no se necesitó modificar para el objetivo de main_page.html de mostrar todos los coches, pero sí para la centralización de UPLOAD_DIR).
+Back/crud/crud_coche.py (modificado delete_coche_from_db para eliminar archivos, y potencialmente create_coche_in_db para propietario_alias).
+Back/auth_config.py (para definir UPLOAD_DIR centralmente).
+Back/models/models_coche.py (para asegurar que user_id y opcionalmente propietario_alias estén en CocheDisplay).

@@ -1,0 +1,236 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Mis Chats - TFG2{% endblock %}
+
+{% block head_extra %}
+<style>
+    .chats-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .chats-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #333;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 15px;
+    }
+
+    .conversation-list {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .conversation-item {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        /* padding: 15px; quitamos padding aquí para que el <a> lo maneje */
+        transition: box-shadow 0.2s ease-in-out, transform 0.2s ease;
+        /* Añadida transición para transform */
+        display: block;
+        /* Para que el <li> ocupe el ancho y el <a> dentro también */
+    }
+
+    .conversation-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+        /* Efecto sutil de elevación */
+    }
+
+    .conversation-item a {
+        /* Este es el enlace principal del item */
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        /* Padding dentro del enlace para mayor área clickeable */
+        border-radius: 5px;
+        /* Para que el hover del fondo se vea bien */
+    }
+
+    .conversation-item a:hover {
+        /* background-color: #f0f8ff;  Opcional: cambio de fondo al pasar el ratón */
+    }
+
+    .car-image-thumbnail {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #eee;
+        flex-shrink: 0;
+        /* Evitar que la imagen se encoja */
+    }
+
+    .no-car-image-thumbnail {
+        width: 60px;
+        height: 60px;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-size: 0.8em;
+        color: #6c757d;
+        flex-shrink: 0;
+        text-align: center;
+        /* Para centrar el texto "Sin Img" */
+    }
+
+    .conversation-info {
+        flex-grow: 1;
+        /* Ocupa el espacio restante */
+        overflow: hidden;
+        /* Para que el text-overflow funcione en hijos */
+    }
+
+    .conversation-info h4 {
+        margin: 0 0 5px 0;
+        font-size: 1.1em;
+        color: #0056b3;
+        font-weight: 600;
+    }
+
+    .conversation-info .car-details-chat {
+        font-size: 0.9em;
+        color: #555;
+        margin-bottom: 8px;
+    }
+
+    .last-message-preview {
+        font-size: 0.9em;
+        /* Un poco más grande para legibilidad */
+        color: #666;
+        /* Un poco más oscuro */
+        font-style: normal;
+        /* Quitar cursiva si se prefiere */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        /* Asegurar que ocupa su línea */
+        /* max-width: 300px;  Considerar quitar si .conversation-info ya maneja overflow */
+    }
+
+    .last-message-preview em {
+        /* Para el texto "Aún no hay mensajes..." */
+        font-style: italic;
+        color: #888;
+    }
+
+    .conversation-meta {
+        /* Contenedor para el timestamp y quizás notificaciones */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        /* Alinear a la derecha */
+        min-width: 100px;
+        /* Ancho mínimo para el timestamp */
+        margin-left: 10px;
+        /* Espacio del resto del contenido */
+        flex-shrink: 0;
+    }
+
+    .last-message-time {
+        font-size: 0.8em;
+        /* Más pequeño */
+        color: #888;
+        /* Más claro */
+    }
+
+    /* Podrías añadir aquí estilos para un contador de mensajes no leídos */
+    /* .unread-badge { ... } */
+
+    .no-conversations {
+        text-align: center;
+        padding: 30px 20px;
+        color: #666;
+        font-size: 1.1em;
+        background-color: #fff;
+        border: 1px dashed #ddd;
+        border-radius: 5px;
+    }
+
+    .error-message {
+        /* Ya definido en main_page, pero lo repetimos para asegurar */
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        padding: .75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: .25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chats-container">
+    <h2>Mis Conversaciones</h2>
+
+    {% if error_message %}
+    <div class="message error">{{ error_message }}</div>
+    {% endif %}
+
+    {% if conversations and conversations|length > 0 %}
+    <ul class="conversation-list">
+        {% for convo in conversations %}
+        <li class="conversation-item">
+            {# El enlace llevará a la página de la conversación específica #}
+            <a href="{{ url_for('chat_conversation_page', conversation_id=convo.id) }}">
+                {% if convo.car_primera_imagen_url %}
+                <img src="{{ convo.car_primera_imagen_url }}" alt="Coche: {{ convo.car_marca }} {{ convo.car_modelo }}"
+                    class="car-image-thumbnail">
+                {% else %}
+                <div class="no-car-image-thumbnail">
+                    <span>Sin<br>Img</span>
+                </div>
+                {% endif %}
+
+                <div class="conversation-info">
+                    <h4>Chat con {{ convo.otro_participante_alias if convo.otro_participante_alias else 'Usuario
+                        Desconocido' }}</h4>
+                    <p class="car-details-chat">Sobre: {{ convo.car_marca if convo.car_marca else 'Coche' }} {{
+                        convo.car_modelo if convo.car_modelo else 'Desconocido' }}</p>
+                    {% if convo.ultimo_mensaje_texto %}
+                    <span class="last-message-preview">"{{ convo.ultimo_mensaje_texto }}"</span>
+                    {% else %}
+                    <span class="last-message-preview"><em>Aún no hay mensajes...</em></span>
+                    {% endif %}
+                </div>
+
+                <div class="conversation-meta">
+                    {% if convo.ultimo_mensaje_en %}
+                    <span class="last-message-time">
+                        {# Asumimos que ultimo_mensaje_en ya es un objeto datetime por el preprocesamiento en la ruta
+                        Flask #}
+                        {{ convo.ultimo_mensaje_en.strftime('%d/%m/%y %H:%M') }}
+                    </span>
+                    {% endif %}
+                    {# Aquí podrías añadir un badge de no leídos si lo implementas #}
+                    {# {% if convo.no_leidos_count > 0 %} <span class="unread-badge">{{ convo.no_leidos_count }}</span>
+                    {% endif %} #}
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% elif not error_message %} {# Solo mostrar si no hubo error y la lista está vacía #}
+    <div class="no-conversations">
+        <p>Aún no tienes conversaciones activas.</p>
+        <p>Puedes iniciar una conversación desde la página de detalles de un coche, o esperar a que alguien te contacte
+            sobre uno de tus coches.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
